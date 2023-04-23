@@ -80,6 +80,15 @@ impl Client {
         Ok(Self::new(connector, None, endpoint))
     }
 
+    #[cfg(feature = "openssl")]
+    pub fn certificate_bytes(data: &[u8], password: &str, endpoint: Endpoint) -> Result<Client, Error>
+    {
+        let pkcs = openssl::pkcs12::Pkcs12::from_der(&data)?.parse(password)?;
+        let connector = AlpnConnector::with_client_cert(&pkcs.cert.to_pem()?, &pkcs.pkey.private_key_to_pem_pkcs8()?)?;
+
+        Ok(Self::new(connector, None, endpoint))
+    }
+
     /// Create a connection to APNs using system certificates, signing every
     /// request with a signature using a private key, key id and team id
     /// provisioned from your [Apple developer
